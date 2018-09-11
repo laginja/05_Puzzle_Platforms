@@ -16,10 +16,20 @@ class PUZZLEPLATFORMS_API AMovingPlatform : public AStaticMeshActor
 	
 public:
 	AMovingPlatform();
+
+	virtual void BeginPlay() override;
 	
 	virtual void Tick(float DeltaTime) override;
 
 private:
 	UPROPERTY(EditAnywhere)
 	float Speed = 5;
+
+	// MakeEditWidget creates a gizmo widget in Unreal editor that we can move around to set location
+	UPROPERTY(EditAnywhere, Meta = (MakeEditWidget = true))
+	FVector TargetLocation;
+
+	FVector GlobalTargetLocation;
+
+	FVector GlobalStartLocation;
 };

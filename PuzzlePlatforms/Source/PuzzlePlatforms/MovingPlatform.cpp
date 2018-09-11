@@ -5,11 +5,26 @@
 
 AMovingPlatform::AMovingPlatform()
 {
-	// enables ticking
+	// Enables ticking
 	PrimaryActorTick.bCanEverTick = true;	
 
-	// makes component movable
+	// Makes component movable
 	SetMobility(EComponentMobility::Movable);
+}
+
+void AMovingPlatform::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		// Makes this actor replicate on clients. Must be called on a server (client doesn't have authority)
+		SetReplicates(true);
+		SetReplicateMovement(true);
+	}
+
+	GlobalStartLocation = GetActorLocation();
+	GlobalTargetLocation = GetTransform().TransformPosition(TargetLocation);
 }
 
 void AMovingPlatform::Tick(float DeltaTime)
@@ -19,7 +34,18 @@ void AMovingPlatform::Tick(float DeltaTime)
 	if (HasAuthority())
 	{
 		FVector Location = GetActorLocation();
-		Location += FVector(Speed * DeltaTime, 0, 0);
+		float JourneyLength = (GlobalTargetLocation - GlobalStartLocation).Size();
+		float JourneyTravelled = (Location - GlobalStartLocation).Size();
+
+		if (JourneyTravelled >= JourneyLength)
+		{
+			FVector Swap = GlobalStartLocation;
+			GlobalStartLocation = GlobalTargetLocation;
+			GlobalTargetLocation = Swap;
+		}
+
+		FVector Direction = (GlobalTargetLocation - GlobalStartLocation).GetSafeNormal();
+		Location += Direction * Speed * DeltaTime;
 		SetActorLocation(Location);
 	}
 	
